@@ -3,13 +3,15 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ShortUrl } from 'src/short/entities/short.entity';
+import { Role } from './role.entity';
 
-@Entity()
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
   user_id: number;
@@ -23,11 +25,14 @@ export class User {
   @Column({ type: 'string' })
   passsword: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: Date.now() })
   created_at: Date;
 
   @OneToMany(() => ShortUrl, (shortUrl) => shortUrl.user_id)
   ShortUrls: ShortUrl[];
+
+  @ManyToOne(() => Role, (role) => role.user)
+  role: Role;
 
   @BeforeInsert()
   @BeforeUpdate()

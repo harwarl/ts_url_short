@@ -1,0 +1,7 @@
+export const REPOSITORY = {
+  USER: 'USER_REPOSITORY',
+  ROLE: 'ROLE_REPOSITORY',
+  SHORT: 'SHORT_REPOSITORY',
+};
+
+export const DATA_SOURCE = 'DATA_SOURCE';
