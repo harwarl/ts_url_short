@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
-import { REPOSITORY } from 'src/utils/constants';
+import { predefinedRoles, REPOSITORY } from 'src/utils/constants';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -12,8 +13,7 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User | null> {
     const users: User[] = await this.userRepository.query(
-      `SELECT * FROM users WHERE email=?`,
-      [email],
+      `SELECT * FROM users WHERE email='${email}'`,
     );
 
     return users.length > 0 ? users[0] : null;
@@ -39,13 +39,13 @@ export class UserService {
   //ADD A NEW USER
   async createNewUser(createUserDto: CreateUserDto): Promise<User | null> {
     const user = await this.userRepository.query(
-      `INSERT INTO users VALUES (DEFAULT, ?, ?, ?, ?, 1)`,
+      `INSERT INTO users VALUES (DEFAULT, ?, ?, ?, ?, ?)`,
       [
         createUserDto.username,
         createUserDto.email,
-        createUserDto.password,
+        await bcrypt.hash(createUserDto.password, 10),
         new Date(),
-        createUserDto.role,
+        predefinedRoles.indexOf(createUserDto.role) + 1,
       ],
     );
     return user;
@@ -63,11 +63,9 @@ export class UserService {
         .map((column, index) => `${column} = $${[columnValues[index]]}`)
         .join(',');
 
-      const update = await this.userRepository.query(
+      await this.userRepository.query(
         `UPDATE users SET ${updateValues} WHERE user_id=${user_id} `,
       );
-
-      console.log({ update });
       return true;
     } catch (error) {
       return false;

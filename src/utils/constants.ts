@@ -7,9 +7,9 @@ export const REPOSITORY = {
 export const DATA_SOURCE = 'DATA_SOURCE';
 
 export enum ROLES {
-  admin = 1,
-  subscriber = 2,
-  free = 3,
+  ADMIN = 1,
+  SUBSCRIBED = 2,
+  FREE = 3,
 }
 
 export const predefinedRoles: string[] = ['admin', 'free', 'subscribed'];

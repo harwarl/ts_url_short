@@ -12,19 +12,18 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, pass: string) {
-    let email = username;
+  async validateUser(email: string, pass: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Invalid Credentials');
     }
     //Validate Password
-    const isPasswordValid = await bcrypt.compare(pass, user.passsword);
+    const isPasswordValid = await bcrypt.compare(pass, user.password);
     if (!isPasswordValid) {
       throw new BadRequestException('Invalid Credentials');
     }
 
-    delete user.passsword;
+    delete user.password;
 
     return user;
   }
@@ -41,6 +40,7 @@ export class AuthService {
     if (user) {
       throw new BadRequestException('Email already exists');
     }
+
     const newUser = await this.userService.createNewUser(createUserDto);
     return this.login(newUser);
   }

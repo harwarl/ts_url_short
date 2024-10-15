@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ShortUrl } from 'src/short/entities/short.entity';
-import { Role } from './role.entity';
+import { Role } from 'src/role/entities/role.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -24,7 +24,7 @@ export class User {
   email: string;
 
   @Column({ type: 'string' })
-  passsword: string;
+  password: string;
 
   @Column({ type: 'timestamp', default: Date.now() })
   created_at: Date;
@@ -38,8 +38,9 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
-    if (this.passsword) {
-      this.passsword = await bcrypt.hash(this.passsword, 10);
+    console.log('in here');
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10);
     }
   }
 }
