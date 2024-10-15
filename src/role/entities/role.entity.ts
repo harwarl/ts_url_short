@@ -1,16 +1,19 @@
 import {
   Column,
   Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
   ManyToMany,
+  PrimaryGeneratedColumn,
+  JoinTable,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../user/entities/user.entity';
 
 export enum Roles {
+  ADMIN = 'admin',
   FREE = 'free',
   SUBSCRIBED = 'subscribed',
 }
+
+export const predefinedRoles: string[] = ['admin', 'free', 'subscriber'];
 
 @Entity({ name: 'roles' })
 export class Role {

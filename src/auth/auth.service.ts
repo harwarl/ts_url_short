@@ -14,7 +14,7 @@ export class AuthService {
 
   async validateUser(username: string, pass: string) {
     let email = username;
-    const user = await this.userService.findByEmail(username);
+    const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Invalid Credentials');
     }
@@ -25,6 +25,7 @@ export class AuthService {
     }
 
     delete user.passsword;
+
     return user;
   }
 

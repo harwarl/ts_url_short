@@ -3,6 +3,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -31,8 +32,8 @@ export class User {
   @OneToMany(() => ShortUrl, (shortUrl) => shortUrl.user_id)
   ShortUrls: ShortUrl[];
 
-  @ManyToOne(() => Role, (role) => role.user)
-  role: Role;
+  @ManyToMany(() => Role, (role) => role.users)
+  roles: Role[];
 
   @BeforeInsert()
   @BeforeUpdate()

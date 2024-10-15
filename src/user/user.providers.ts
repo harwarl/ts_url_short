@@ -5,9 +5,7 @@ import { DATA_SOURCE, REPOSITORY } from 'src/utils/constants';
 export const UserProviders = [
   {
     provide: REPOSITORY.USER,
-    useFactory: (dataSource: DataSource) => {
-      dataSource.getRepository(User);
-    },
+    useFactory: (dataSource: DataSource) => dataSource.getRepository(User),
     inject: [DATA_SOURCE],
   },
 ];

@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',
-    useFactory: () => {
+    useFactory: async () => {
       const dataSource = new DataSource({
         type: 'mysql',
         host: process.env.DB_HOST,
@@ -15,7 +15,9 @@ export const databaseProviders = [
         entities: [__dirname + '/**/*.entity{.ts, .js}'],
         synchronize: true,
       });
-      return dataSource.initialize();
+      await dataSource.initialize();
+      console.log('DB INITIALIZED');
+      return dataSource;
     },
   },
 ];
