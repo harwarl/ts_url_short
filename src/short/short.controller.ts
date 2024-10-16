@@ -1,34 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { ShortService } from './short.service';
-import { CreateShortDto } from './dto/create-short.dto';
-import { UpdateShortDto } from './dto/update-short.dto';
+import { CreateShortDto, CreateShortUrlDto } from './dto/create-short.dto';
+import { CurrentUser } from 'src/user/decorator/currentUser.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('short')
 export class ShortController {
   constructor(private readonly shortService: ShortService) {}
 
   @Post()
-  create(@Body() createShortDto: CreateShortDto) {
-    return this.shortService.create(createShortDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.shortService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.shortService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateShortDto: UpdateShortDto) {
-    return this.shortService.update(+id, updateShortDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.shortService.remove(+id);
+  async createShortUrl(
+    @Req() req: any,
+    @CurrentUser('id') currentUserId: number,
+    @Body() createShortUrlDto: CreateShortUrlDto,
+  ) {
+    console.log(req);
+    // const user_id = currentUserId;
+    // return await this.shortService.createShortUrl({
+    //   user_id,
+    //   ...createShortUrlDto,
+    // });
   }
 }
