@@ -8,10 +8,8 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { Public } from './decorators/public.decorator';
 import { LocalGuard } from './guards/local.guard';
 
-@Public()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

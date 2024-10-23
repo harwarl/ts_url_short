@@ -20,6 +20,6 @@ import { RoleModule } from './role/role.module';
     RoleModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [AppService],
 })
 export class AppModule {}
