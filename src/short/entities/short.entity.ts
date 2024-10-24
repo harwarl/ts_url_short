@@ -1,13 +1,13 @@
 import { User } from 'src/user/entities/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'urlsgit ' })
+@Entity({ name: 'urls ' })
 export class ShortUrl {
   @PrimaryGeneratedColumn()
   short_id: number;
 
   @Column({ type: 'string' })
-  original: string;
+  original_url: string;
 
   @Column({ type: 'datetime' })
   expires_at: Date;

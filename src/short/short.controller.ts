@@ -15,7 +15,7 @@ export class ShortController {
     @CurrentUser('id') currentUserId: number,
     @Body() createShortUrlDto: CreateShortUrlDto,
   ) {
-    console.log(req);
+    // console.log(req);
     // const user_id = currentUserId;
     // return await this.shortService.createShortUrl({
     //   user_id,
