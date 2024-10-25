@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { REPOSITORY } from 'src/utils/constants';
 import { Repository } from 'typeorm';
 import { ShortUrl } from './entities/short.entity';
@@ -44,7 +44,9 @@ export class ShortService {
     const hashStr = this.base10ToBase62(this._counter);
     //increase the counter
     this._counter++;
-    return `http://short.url/${hashStr}`;
+    console.log({ counter: this._counter });
+    //return the shortened Url
+    return { shortUrl: `http://short.url/${hashStr}`, hash: hashStr };
   }
 
   async createShortUrl(createShortDto: CreateShortDto) {
@@ -56,17 +58,111 @@ export class ShortService {
     //Get User with roles
     const user = await this.userRepository.query(
       `
-      SELECT role_id FROM users INNER JOIN roles ON users.role_id = roles.role_id WHERE user_id=?
+      SELECT  DISTINCT 
+        ru.role_id, 
+        u.user_id, 
+        u.username, 
+        u.email, 
+        u.created_at, 
+        r.name AS role
+      FROM roles_has_users ru 
+      INNER JOIN users u 
+      ON ru.user_id = u.user_id 
+      INNER JOIN roles r 
+      ON ru.role_id = r.role_id
+      WHERE u.user_id = ?
       `,
       [createShortDto.user_id],
     );
 
-    console.log({ user: user[0] });
+    if (user.length < 1) {
+      throw new NotFoundException('User not found');
+    }
+    const _u = user[0];
+    const _isAdminOrSubscriber = ['admin', 'subscribed'].includes(_u.role);
+
+    //todo:
+    /**
+     * Check the user role and check the number of remaining free short urls
+     */
+    if (_isAdminOrSubscriber) {
+      //get the user and the url hash
+      const { shortUrl, hash } = this.shortenUrl();
+      //Save the shortenUrl in the database
+      const short = await this.shortRepository.query(
+        `
+        INSERT INTO urls (
+            short_id,
+            original_url,
+            expires_at,
+            created_at,
+            user_id
+        ) VALUES (
+            ?, ?, ?, ?, ?
+        );
+        `,
+        [
+          hash,
+          createShortDto.longUrl,
+          new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+          new Date(),
+          createShortDto.user_id,
+        ],
+      );
+      return {
+        shortUrl,
+        succes: true,
+      };
+    } else {
+    }
   }
 
-  async getUserShorts() {}
-  async deleteUrl() {}
-  async getOriginalUrl() {}
+  async getUserShorts(_currentUserId: number) {
+    const shorts = await this.shortRepository.query(
+      `
+      SELECT * 
+      FROM urls
+      WHERE user_id = ?
+      `,
+      [_currentUserId],
+    );
+
+    return {
+      success: true,
+      shorts,
+    };
+  }
+
+  async deleteUrl(_shortUrlId: string) {
+    const short = await this.getShortUrlById(_shortUrlId);
+
+    if (short.length < 1) {
+      throw new NotFoundException('Short Url Not Found');
+    }
+
+    await this.shortRepository.query(
+      `
+      DELETE FROM urls WHERE short_id = ?
+      `,
+      [_shortUrlId],
+    );
+
+    return {
+      success: true,
+      message: 'Short Deleted',
+    };
+  }
+
+  async getShortUrlById(_shortUrlId: string) {
+    const short = await this.shortRepository.query(
+      `
+      SELECT * from urls WHERE short_id = ?
+      `,
+      [_shortUrlId],
+    );
+
+    return short[0];
+  }
 
   convert(_char: string): any {
     if (_char >= '0' && _char <= '9') {
