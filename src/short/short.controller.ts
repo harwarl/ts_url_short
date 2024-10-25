@@ -6,11 +6,13 @@ import {
   Get,
   Param,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { ShortService } from './short.service';
 import { CreateShortDto, CreateShortUrlDto } from './dto/create-short.dto';
 import { CurrentUser } from 'src/user/decorator/currentUser.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { Response } from 'express';
 
 @Controller('shorts')
 export class ShortController {
@@ -36,8 +38,11 @@ export class ShortController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':shortId')
-  async getSingleShort(@Param('shortId') shortId: string) {
-    return await this.shortService.getShortUrlById(shortId);
+  async getSingleShort(
+    @Param('shortId') shortId: string,
+    @Res() res: Response,
+  ) {
+    return await this.shortService.redirectShortUrl(shortId, res);
   }
 
   @UseGuards(JwtAuthGuard)

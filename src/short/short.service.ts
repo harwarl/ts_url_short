@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { ShortUrl } from './entities/short.entity';
 import { CreateShortDto, CreateShortUrlDto } from './dto/create-short.dto';
 import { User } from 'src/user/entities/user.entity';
+import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ShortService {
@@ -12,8 +14,9 @@ export class ShortService {
   constructor(
     @Inject(REPOSITORY.SHORT) private shortRepository: Repository<ShortUrl>,
     @Inject(REPOSITORY.USER) private userRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {
-    this._counter = 100000000000;
+    this._counter = this.configService.get<number>('COUNTER');
     this._chars =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   }
@@ -133,10 +136,20 @@ export class ShortService {
     };
   }
 
+  async redirectShortUrl(short_id: string, res: Response) {
+    const short = await this.getShortUrlById(short_id);
+    if (!short?.length) {
+      throw new NotFoundException('Short Url Not Found');
+    }
+
+    const { original_url: originalUrl } = short[0];
+    return res.redirect(originalUrl);
+  }
+
   async deleteUrl(_shortUrlId: string) {
     const short = await this.getShortUrlById(_shortUrlId);
 
-    if (short.length < 1) {
+    if (!short?.length) {
       throw new NotFoundException('Short Url Not Found');
     }
 
@@ -161,7 +174,7 @@ export class ShortService {
       [_shortUrlId],
     );
 
-    return short[0];
+    return short;
   }
 
   convert(_char: string): any {

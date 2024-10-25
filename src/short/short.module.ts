@@ -4,9 +4,10 @@ import { ShortController } from './short.controller';
 import { ShortProviders } from './short.providers';
 import { UserProviders } from 'src/user/user.providers';
 import { DatabaseModule } from 'src/database/database.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, ConfigModule],
   controllers: [ShortController],
   providers: [ShortService, ...ShortProviders, ...UserProviders],
 })
