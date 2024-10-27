@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { REPOSITORY } from 'src/utils/constants';
 import { Repository } from 'typeorm';
@@ -193,31 +194,33 @@ export class ShortService {
 
   async getUserShorts(_currentUserId: number, query: GetQueryDto) {
     const { page = 1, limit = 10, expired, startDate, endDate } = query || {};
+    const offset = (page - 1) * limit;
+    const params: any[] = [_currentUserId];
 
-    let queryString = `SELECT * FROM urls WHERE user_id = ${_currentUserId}`;
+    let queryString = `SELECT * FROM urls WHERE user_id = ?`;
 
     // startDate in format YYYY-MM-DD
     if (startDate) {
-      queryString = queryString + ` AND created_at >= '${startDate}'`;
+      params.push(startDate);
+      queryString += ` AND created_at >= ?`;
     }
     if (endDate) {
-      queryString = queryString + ` AND created_at <= '${endDate}'`;
+      params.push(endDate);
+      queryString += ` AND created_at <= ?`;
     }
+    let currentDate = new Date();
     if (expired === true) {
-      queryString = queryString + ` AND expires_at <= '${new Date()}'`;
+      params.push(currentDate);
+      queryString += ` AND expires_at <= ?`;
     }
     if (expired === false) {
-      queryString = queryString + ` AND expires_at >= '${new Date()}'`;
+      params.push(currentDate);
+      queryString += ` AND expires_at >= '?'`;
     }
-    if (page) {
-      queryString = queryString + ` SKIP ${(page - 1) * limit}`;
-    }
-    if (limit) {
-      queryString = queryString + ` TAKE ${limit}`;
-    }
-    const shorts = await this.shortRepository.query(
-      queryString + ' ORDER BY created_at DESC',
-    );
+
+    queryString += ` ORDER BY created_at DESC SKIP ${offset} TAKE ${limit}`;
+
+    const shorts = await this.shortRepository.query(queryString);
 
     return {
       success: true,
@@ -233,6 +236,10 @@ export class ShortService {
     //Add expired here
     if (!short?.length) {
       throw new NotFoundException('Short Url Not Found');
+    }
+
+    if (short[0].expires_at < new Date()) {
+      throw new BadRequestException('Short Url has expired');
     }
 
     const { original_url: originalUrl } = short[0];

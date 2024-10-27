@@ -10,7 +10,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { ShortService } from './short.service';
-import { CreateShortDto, CreateShortUrlDto } from './dto/create-short.dto';
+import {
+  CreateCustomShortDto,
+  CreateShortDto,
+  CreateShortUrlDto,
+} from './dto/create-short.dto';
 import { CurrentUser } from 'src/user/decorator/currentUser.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { Response } from 'express';
@@ -30,6 +34,19 @@ export class ShortController {
       ...createShortUrlDto,
       user_id: currentUserId,
     } as CreateShortDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async createCustomShortUrl(
+    @CurrentUser('user_id') currentUserId: number,
+    @Body() createShortUrlDto: CreateCustomShortDto,
+  ) {
+    return await this.shortService.createCustomShortUrl({
+      ...createShortUrlDto,
+      user_id: currentUserId,
+      custom_url: createShortUrlDto.custom_url,
+    } as CreateCustomShortDto);
   }
 
   @UseGuards(JwtAuthGuard)
