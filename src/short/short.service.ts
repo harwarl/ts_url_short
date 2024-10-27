@@ -1,11 +1,21 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { REPOSITORY } from 'src/utils/constants';
 import { Repository } from 'typeorm';
 import { ShortUrl } from './entities/short.entity';
-import { CreateShortDto, CreateShortUrlDto } from './dto/create-short.dto';
+import {
+  CreateCustomShortDto,
+  CreateShortDto,
+  CreateShortUrlDto,
+} from './dto/create-short.dto';
 import { User } from 'src/user/entities/user.entity';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { GetQueryDto } from './dto/getShortQuery.dto';
 
 @Injectable()
 export class ShortService {
@@ -117,27 +127,110 @@ export class ShortService {
         succes: true,
       };
     } else {
+      //simple checks to check if user has exceeded the count
     }
   }
 
-  async getUserShorts(_currentUserId: number) {
-    const shorts = await this.shortRepository.query(
+  async createCustomShortUrl(createCustomShortUrl: CreateCustomShortDto) {
+    //get the user details
+    // only admin and the subscriber can use this feature
+    const user = await this.userRepository.query(
       `
-      SELECT * 
-      FROM urls
-      WHERE user_id = ?
+      SELECT  DISTINCT 
+        ru.role_id, 
+        u.user_id, 
+        u.username, 
+        u.email, 
+        u.created_at, 
+        r.name AS role
+      FROM roles_has_users ru 
+      INNER JOIN users u 
+      ON ru.user_id = u.user_id 
+      INNER JOIN roles r 
+      ON ru.role_id = r.role_id
+      WHERE u.user_id = ?
       `,
-      [_currentUserId],
+      [createCustomShortUrl.user_id],
+    );
+
+    if (user.length < 1) {
+      throw new NotFoundException('User Not Found');
+    }
+
+    const _u = user[0];
+    const _isAdminOrSubscriber = ['admin', 'subscribed'].includes(_u.role);
+
+    if (!_isAdminOrSubscriber) {
+      throw new UnauthorizedException('Subscribe to be able to do this');
+    }
+
+    await this.shortRepository.query(
+      `
+        INSERT INTO urls (
+            short_id,
+            original_url,
+            expires_at,
+            created_at,
+            user_id
+        ) VALUES (
+            ?, ?, ?, ?, ?
+        );
+        `,
+      [
+        createCustomShortUrl.custom_url,
+        createCustomShortUrl.longUrl,
+        new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        new Date(),
+        createCustomShortUrl.user_id,
+      ],
+    );
+
+    return {
+      shortUrl: `http://short.url/${createCustomShortUrl.custom_url}`,
+      success: true,
+    };
+  }
+
+  async getUserShorts(_currentUserId: number, query: GetQueryDto) {
+    const { page = 1, limit = 10, expired, startDate, endDate } = query || {};
+
+    let queryString = `SELECT * FROM urls WHERE user_id = ${_currentUserId}`;
+
+    // startDate in format YYYY-MM-DD
+    if (startDate) {
+      queryString = queryString + ` AND created_at >= '${startDate}'`;
+    }
+    if (endDate) {
+      queryString = queryString + ` AND created_at <= '${endDate}'`;
+    }
+    if (expired === true) {
+      queryString = queryString + ` AND expires_at <= '${new Date()}'`;
+    }
+    if (expired === false) {
+      queryString = queryString + ` AND expires_at >= '${new Date()}'`;
+    }
+    if (page) {
+      queryString = queryString + ` SKIP ${(page - 1) * limit}`;
+    }
+    if (limit) {
+      queryString = queryString + ` TAKE ${limit}`;
+    }
+    const shorts = await this.shortRepository.query(
+      queryString + ' ORDER BY created_at DESC',
     );
 
     return {
       success: true,
       shorts,
+      pages: Math.ceil(shorts / limit),
+      page,
+      limit,
     };
   }
 
   async redirectShortUrl(short_id: string, res: Response) {
     const short = await this.getShortUrlById(short_id);
+    //Add expired here
     if (!short?.length) {
       throw new NotFoundException('Short Url Not Found');
     }
