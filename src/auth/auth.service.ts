@@ -35,14 +35,12 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    console.log({ createUserDto });
     const user = await this.userService.findByEmail(createUserDto.email);
     if (user) {
       throw new BadRequestException('Email already exists');
     }
 
     const newUser = await this.userService.createNewUser(createUserDto);
-    console.log({ newUser });
     return this.login(newUser);
   }
 }

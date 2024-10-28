@@ -58,7 +58,6 @@ export class ShortService {
     const hashStr = this.base10ToBase62(this._counter);
     //increase the counter
     this._counter++;
-    console.log({ counter: this._counter });
     //return the shortened Url
     return { shortUrl: `http://short.url/${hashStr}`, hash: hashStr };
   }
