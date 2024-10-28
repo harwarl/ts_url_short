@@ -25,7 +25,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     context: ExecutionContext,
     status?: any,
   ): TUser {
-    console.log({ info });
+    if (info?.message === 'jwt expired') {
+      throw new UnauthorizedException('Jwt Expired');
+    }
     if (err || !user) {
       throw err || new UnauthorizedException();
     }

@@ -193,7 +193,7 @@ export class ShortService {
   }
 
   async getUserShorts(_currentUserId: number, query: GetQueryDto) {
-    const { page = 1, limit = 10, expired, startDate, endDate } = query || {};
+    const { page = 1, limit = 10, startDate, endDate } = query || {};
     const offset = (page - 1) * limit;
     const params: any[] = [_currentUserId];
 
@@ -208,19 +208,10 @@ export class ShortService {
       params.push(endDate);
       queryString += ` AND created_at <= ?`;
     }
-    let currentDate = new Date();
-    if (expired === true) {
-      params.push(currentDate);
-      queryString += ` AND expires_at <= ?`;
-    }
-    if (expired === false) {
-      params.push(currentDate);
-      queryString += ` AND expires_at >= '?'`;
-    }
 
-    queryString += ` ORDER BY created_at DESC SKIP ${offset} TAKE ${limit}`;
+    queryString += ` ORDER BY created_at DESC LIMIT ${offset}, ${limit}`;
 
-    const shorts = await this.shortRepository.query(queryString);
+    const shorts = await this.shortRepository.query(queryString, params);
 
     return {
       success: true,

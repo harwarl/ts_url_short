@@ -37,7 +37,7 @@ export class ShortController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post()
+  @Post('custom')
   async createCustomShortUrl(
     @CurrentUser('user_id') currentUserId: number,
     @Body() createShortUrlDto: CreateCustomShortDto,
